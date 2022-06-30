@@ -3,140 +3,149 @@ version: "3.8"
 services:
   # Proxy reverso
   traefik:
-    hostname: caminhointernoservicos
+    #hostname: caminhointernoservicos
     image: traefik:2.5
     # Entrypoints:
     #  - web: O que é exposto na rede pela porta 80
     #  - web-interno: Não exposto na rede - Ponto de entrada na 
     #                 rede interna do Traefik utilizado para a comunicação do 
-    #                 api-gateway e web-api
+    #                 api-gateway e web-api - WEB INTERNO REMOVIDO POR INCOMPATIBILIDADE COM A CONFIGURAÇÃO DO TRAEFIK PARA LEITURA DE CERTIFICADO
     command: >
       --providers.docker=true
       --entrypoints.web.address=:8000
-      --entrypoints.web-interno.address=:80
       --entrypoints.web-secure.address=:8443
       --log.level="INFO"
+      --accesslog.filepath=/traefik-log/access.log
       --providers.docker.exposedbydefault=false
+      --providers.file.directory=/traefik-config
+      --providers.file.watch=true
     restart: unless-stopped
+    # --serversTransport.insecureSkipVerify=true
     # --providers.file.directory=/traefik-config
     ports:
       - 80:8000 # The HTTP port
       - 443:8443 # The HTTPS port
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Volumes para os certificados SSL
+      # - XXXXX:/etc/ssl/certs/XXXX.pem:ro # chave pública
+      # - XXXXX:/etc/ssl/private/XXXX.key:ro # chave privada
+      # - XXXXX:/etc/ssl/certs/caserpro.pem:ro # CA do Serpro
+      - ./traefik.yml:/traefik-config/traefik.yml:ro
+      - ../log/traefik:/traefik-log:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     labels:
-     - traefik.enable=true
-     - traefik.http.routers.traefik.rule=Host(`traefik.api.localhost`)
-     - traefik.http.routers.traefik.entryPoints=web
-     - traefik.http.routers.traefik.tls=false
-     - traefik.http.services.traefik.loadbalancer.server.port=8080
+      - traefik.enable=true
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      # middleware redirect
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
     networks:
       - pgd
     
   web-api:
-    # Futuro oficial do Governo Federal
-    #image: ghcr.io/spbgovbr/sistema_programa_de_gestao_susep/sgd:latest
-    # Imagem do SrMouraSilva enquanto o ME não corrige o repositório...
-    image: ghcr.io/srmourasilva/sistema_programa_de_gestao_susep/sgd:latest
-    # Imagem caso você queira testar na sua máquina
-    #image: susep
+    hostname: caminhointernoservicos
+    image: local/sgd_susep:latest
     working_dir: /app/api/
     command: dotnet Susep.SISRH.WebApi.dll
     volumes:
       - ./api/Settings:/app/api/Settings:ro
       #- ../install/Arquivos de configuração/1. Susep.SISRH.WebApi/Settings:/app/api/Settings:ro
       - ../log/api:/app/api/Logs:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     environment: 
       - ASPNETCORE_ENVIRONMENT=Homolog
 
       # Configurações de banco de dados
-      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=programa_gestao;User Id=sa;Password=P1ssw@rd;
+      - ConnectionStrings__DefaultConnection=Host=postgres_sgd;Port=5432;Database=postgres;Username=postgres;Password=SENHADOBANCO;
 
       # Configurações de e-mail - Exemplo: Ministério da Economia
-      - emailOptions__EmailRemetente=no-reply@me.gov.br
-      - emailOptions__NomeRemetente=Programa de Gestão - ME
-      - emailOptions__SmtpServer=smtp.me.gov.br
-      - emailOptions__Port=25
+      #- emailOptions__EmailRemetente=no-reply@me.gov.br
+      #- emailOptions__NomeRemetente=Programa de Gestão - ME
+      #- emailOptions__SmtpServer=smtp.me.gov.br
+      #- emailOptions__Port=25
 
       # LDAP
       # -> URL do Servidor LDAP
-      - ldapOptions__Configurations__0__Url=
+      #- ldapOptions__Configurations__0__Url=
       # -> Porta do Servidor LDAP
-      - ldapOptions__Configurations__0__Port=389
+      #- ldapOptions__Configurations__0__Port=389
       # -> DN do usuário de serviço que será utilizado para autenticar no LDAP"
-      - ldapOptions__Configurations__0__BindDN=CN=Fulano de tal,CN=Users,DC=orgao
+      #- ldapOptions__Configurations__0__BindDN=CN=Fulano de tal,CN=Users,DC=orgao
       # -> Senha do usuário de serviço que será utilizado para autenticar no LDAP
-      - ldapOptions__Configurations__0__BindPassword=
+      #- ldapOptions__Configurations__0__BindPassword=
       # -> DC que será utilizado para chegar à base de usuários no LDAP
-      - ldapOptions__Configurations__0__SearchBaseDC=CN=Users,DC=orgao
+      #- ldapOptions__Configurations__0__SearchBaseDC=CN=Users,DC=orgao
       # -> Consulta a ser aplicada no LDAP para encontrar os usuários
-      - ldapOptions__Configurations__0__SearchFilter=(&(objectClass=user)(objectClass=person)(sAMAccountName={0}))
+      #- ldapOptions__Configurations__0__SearchFilter=(&(objectClass=user)(objectClass=person)(sAMAccountName={0}))
       # -> Campo do LDAP em que será encontrado o CPF do usuário
-      - ldapOptions__Configurations__0__CpfAttributeFilter=
+      #- ldapOptions__Configurations__0__CpfAttributeFilter=
       # -> Campo do LDAP em que será encontrado o e-mail do usuário
-      - ldapOptions__Configurations__0__EmailAttributeFilter=
+      #- ldapOptions__Configurations__0__EmailAttributeFilter=
 
     # Habilitar somente para debug
     # ports:
     #   - 8082:80
     labels:
-     - traefik.enable=true
-     - traefik.http.routers.web-api.rule=PathPrefix(`/`)
-     - traefik.http.routers.web-api.entrypoints=web-interno
-     - traefik.http.routers.web-api.tls=false
-     - traefik.http.services.web-api.loadbalancer.server.port=80
-     - traefik.http.services.web-api.loadbalancer.server.scheme=http
-     - traefik.http.routers.web-api.middlewares=stripprefix_web_api
-     - traefik.http.middlewares.stripprefix_web_api.stripprefix.prefixes=/SISGP/api/
+     - traefik.enable=false
+     #- traefik.http.routers.web-api.rule=PathPrefix(`/`)
+     #- traefik.http.routers.web-api.entrypoints=web-interno
+     #- traefik.http.routers.web-api.tls=false
+     #- traefik.http.services.web-api.loadbalancer.server.port=80
+     #- traefik.http.services.web-api.loadbalancer.server.scheme=http
+     #- traefik.http.routers.web-api.middlewares=stripprefix_web_api
+     #- traefik.http.middlewares.stripprefix_web_api.stripprefix.prefixes=/SISGP/api/
+     
     networks:
       - pgd
 
   api-gateway:
-    # Futuro oficial do Governo Federal
-    #image: ghcr.io/spbgovbr/sistema_programa_de_gestao_susep/sgd:latest
-    # Imagem do SrMouraSilva enquanto o ME não corrige o repositório...
-    image: ghcr.io/srmourasilva/sistema_programa_de_gestao_susep/sgd:latest
-    # Imagem caso você queira testar na sua máquina
-    #image: susep
+    image: local/sgd_susep:latest
     command: dotnet Susep.SISRH.ApiGateway.dll
     working_dir: /app/gateway/
     volumes:
       - ./gateway/Settings:/app/gateway/Settings:ro
       - ../log/gateway:/app/gateway/Logs:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     environment: 
       - ASPNETCORE_ENVIRONMENT=Homolog
     labels:
      - traefik.enable=true
      - traefik.http.routers.gateway.rule=PathPrefix(`/gateway`)
-     - traefik.http.routers.gateway.entrypoints=web
-     - traefik.http.routers.gateway.tls=false
+     - traefik.http.routers.gateway.entrypoints=web-secure
+     - traefik.http.routers.gateway.tls=true
      - traefik.http.services.gateway.loadbalancer.server.port=80
      - traefik.http.services.gateway.loadbalancer.server.scheme=http
-     - traefik.http.routers.gateway.middlewares=gateway_stripprefix
+     - traefik.http.routers.gateway.middlewares=gateway_stripprefix,gw_test-passtlsclientcert
      - traefik.http.middlewares.gateway_stripprefix.stripprefix.prefixes=/gateway/
+     - traefik.http.middlewares.gw_test-passtlsclientcert.passTLSClientCert.info.subject.commonName=true
     networks:
       - pgd
 
   web-app:
-    # Futuro oficial do Governo Federal
-    #image: ghcr.io/spbgovbr/sistema_programa_de_gestao_susep/sgd:latest
-    # Imagem do SrMouraSilva enquanto o ME não corrige o repositório...
-    image: ghcr.io/srmourasilva/sistema_programa_de_gestao_susep/sgd:latest
-    # Imagem caso você queira testar na sua máquina
-    #image: susep
+    image: local/sgd_susep:latest
     command: dotnet Susep.SISRH.WebApp.dll
     working_dir: /app/app/
     volumes:
       - ./app/env.js:/app/app/ClientApp/dist/env.js:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     labels:
      - traefik.enable=true
      - traefik.http.routers.app.rule=PathPrefix(`/`)
-     - traefik.http.routers.app.entrypoints=web
-     - traefik.http.routers.app.tls=false
+     - traefik.http.routers.app.entrypoints=web-secure
+     - traefik.http.routers.app.tls=true
      - traefik.http.services.app.loadbalancer.server.port=80
      - traefik.http.services.app.loadbalancer.server.scheme=http
-     - traefik.http.routers.app.middlewares=app_stripprefix
+     - traefik.http.routers.app.middlewares=app_redirect-to-https,app_stripprefix,app_test-passtlsclientcert
+     - traefik.http.middlewares.app_redirect-to-https.redirectscheme.scheme=https
      - traefik.http.middlewares.app_stripprefix.stripprefix.prefixes=/safe/sisgp/programagestao/app/
+     - traefik.http.middlewares.app_test-passtlsclientcert.passTLSClientCert.info.subject.commonName=true
     networks:
       - pgd
 
@@ -151,5 +160,5 @@ services:
 
 networks:
   pgd:
+    external: true
     name: pgd
-    driver: bridge

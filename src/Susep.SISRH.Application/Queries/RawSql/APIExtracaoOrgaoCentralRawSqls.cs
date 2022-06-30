@@ -23,7 +23,7 @@
                         ,pacto.tempoTotalDisponivel CargaHorariaTotal
                     FROM [ProgramaGestao].[PactoTrabalho] pacto
 	                    INNER JOIN [dbo].[Pessoa] pes ON pes.pessoaId = pacto.pessoaId
-	                    INNER JOIN [dbo].[VW_UnidadeSiglaCompleta] und on und.unidadeId = pes.unidadeId
+	                    INNER JOIN [dbo].[VW_UnidadeSiglaCompleta] und on und.unidadeId = pes.unidadeId;
 
 
                     SELECT
@@ -40,7 +40,7 @@
                         ,pitem.nota Nota 
                         ,pitem.justificativa Justificativa 
                     FROM [ProgramaGestao].[PactoTrabalhoAtividade] pitem
-	                    INNER JOIN [ProgramaGestao].[ItemCatalogo] item ON pitem.itemCatalogoId = item.itemCatalogoId
+	                    INNER JOIN [ProgramaGestao].[ItemCatalogo] item ON pitem.itemCatalogoId = item.itemCatalogoId;
 
 
                 ";

@@ -1,0 +1,12 @@
+tls:
+  certificates:
+    - certFile: /etc/ssl/certs/XXXX.pem # chave pública
+      keyFile: /etc/ssl/private/XXXX.key # chave privada
+  options:
+    default:
+      minVersion: VersionTLS11
+      clientAuth:
+        # in PEM format. each file can contain multiple CAs.
+        caFiles:
+          - /etc/ssl/certs/caserpro.pem
+        clientAuthType: RequireAndVerifyClientCert

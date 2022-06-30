@@ -23,11 +23,16 @@
             "assets": [
               "src/assets",
               "src/web.config",
-              "src/env.js"
+              "src/env.js",
+              "src/env.dev.js"
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/ngx-toastr/toastr.css",
+              "node_modules/@fontsource/roboto/latin.css",
+              "node_modules/@fontsource/roboto/latin-ext.css",
+              "node_modules/material-design-icons-iconfont/dist/material-design-icons.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.css",
               "src/assets/dsgov-base.css",
               "src/assets/dsgov-components.css",
               "src/assets/dsgov-templates.css",
@@ -52,7 +57,9 @@
               "buildOptimizer": true
             },
             "development": {
-              "fileReplacements": [
+              "assets": [
+                "src/env.js",
+                "src/env.dev.js"
               ],
               "baseHref": "/safe/sisgp/programagestao/app/",
               "optimization": true,

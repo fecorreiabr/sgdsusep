@@ -51,7 +51,7 @@
                                 ,p.CargaHoraria		                        
                         FROM [dbo].[Pessoa] p
                         INNER JOIN [dbo].VW_UnidadeSiglaCompleta v ON v.unidadeId = p.unidadeId
-                        WHERE p.pessoaId =  @pessoaId
+                        WHERE p.pessoaId =  @pessoaId;
                     
                         SELECT 
 	                        ptac.planoTrabalhoAtividadeCandidatoId
@@ -77,7 +77,7 @@
                             ON cdm.catalogoDominioId = pta.modalidadeExecucaoId
                             INNER JOIN [dbo].Unidade un 
                             ON un.unidadeId =pt.unidadeId
-                        WHERE p.pessoaId = @pessoaId                 
+                        WHERE p.pessoaId = @pessoaId;
 
                         SELECT 
 	                         ptai.planoTrabalhoAtividadeItemId
@@ -93,7 +93,7 @@
                             ON ptai.planoTrabalhoAtividadeId = pta.planoTrabalhoAtividadeId
                             INNER JOIN [ProgramaGestao].ItemCatalogo ic 
                             ON ic.itemCatalogoId = ptai.itemCatalogoId
-                         WHERE p.pessoaId = @pessoaId
+                         WHERE p.pessoaId = @pessoaId;
 
                         SELECT 
 	                         ptai.planoTrabalhoAtividadeCriterioId
@@ -109,7 +109,7 @@
                             ON ptai.planoTrabalhoAtividadeId = pta.planoTrabalhoAtividadeId
                             INNER JOIN [dbo].CatalogoDominio cd 
                             ON cd.catalogoDominioId = ptai.criterioId
-                       WHERE p.pessoaId = @pessoaId
+                       WHERE p.pessoaId = @pessoaId;
 
                         SELECT
 	                           ptach.planoTrabalhoAtividadeCandidatoHistoricoId
@@ -196,7 +196,7 @@
 									INNER JOIN [dbo].[VW_UnidadeSiglaCompleta] u ON u.unidadeId = COALESCE(a.unidadeId, pe.unidadeId)  
 								WHERE pe.pessoaId = @pessoaId AND tf.tfnIndicadorChefia = 1
 							) us ON p.unidadeId = us.unidadeId
-						WHERE p.situacaoId = 307
+						WHERE p.situacaoId = 307;
 
 
 
@@ -214,11 +214,12 @@
 	                        INNER JOIN [dbo].[CatalogoDominio] cd2 ON p.situacaoId = cd2.catalogoDominioId
 	                        INNER JOIN (
 		                        SELECT 
-			                        CASE WHEN pe.tipoFuncaoId IS NULL THEN pe.pessoaId ELSE NULL END pessoaId
+			                        CASE WHEN tf.tfnIndicadorChefia = 1 THEN NULL ELSE pe.pessoaId END pessoaId
 			                        ,u.undSiglaCompleta 
 		                        FROM [dbo].Pessoa pe
                                     LEFT OUTER JOIN [dbo].[PessoaAlocacaoTemporaria] a ON a.pessoaId = pe.pessoaId AND a.dataFim IS NULL
 			                        INNER JOIN [dbo].[VW_UnidadeSiglaCompleta] u ON u.unidadeId = COALESCE(a.unidadeId, pe.unidadeId)  
+                                    LEFT OUTER JOIN [dbo].[TipoFuncao] tf ON tf.tipoFuncaoId = pe.tipoFuncaoId
 		                        WHERE pe.pessoaId = @pessoaId
 								UNION 
 								SELECT pe.pessoaId
@@ -232,7 +233,7 @@
 									   (u1.undSiglaCompleta like chefe.undSiglaCompleta + '%' AND chefe.pessoaId IS NULL) 
 						WHERE p.situacaoId <= 405 AND 
                             (chefe.pessoaId IS NULL OR p.pessoaId = @pessoaId)
-                        ORDER BY p.dataInicio, p.dataFim
+                        ORDER BY p.dataInicio, p.dataFim;
 
 
 
@@ -248,11 +249,12 @@
 	                        INNER JOIN [dbo].[CatalogoDominio] cd2 ON s.tipoSolicitacaoId = cd2.catalogoDominioId
 	                        INNER JOIN (
 		                        SELECT 
-			                        CASE WHEN pe.tipoFuncaoId IS NULL THEN pe.pessoaId ELSE NULL END pessoaId
+			                        CASE WHEN tf.tfnIndicadorChefia = 1 THEN NULL ELSE pe.pessoaId END pessoaId
 			                        ,u.undSiglaCompleta 
 		                        FROM [dbo].Pessoa pe
                                     LEFT OUTER JOIN [dbo].[PessoaAlocacaoTemporaria] a ON a.pessoaId = pe.pessoaId AND a.dataFim IS NULL
 			                        INNER JOIN [dbo].[VW_UnidadeSiglaCompleta] u ON u.unidadeId = COALESCE(a.unidadeId, pe.unidadeId) 
+                                    LEFT OUTER JOIN [dbo].[TipoFuncao] tf ON tf.tipoFuncaoId = pe.tipoFuncaoId
 		                        WHERE pe.pessoaId = @pessoaId
 								UNION 
 								SELECT pe.pessoaId

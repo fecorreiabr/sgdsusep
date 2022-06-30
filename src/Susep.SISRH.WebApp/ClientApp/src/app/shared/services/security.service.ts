@@ -38,6 +38,7 @@ export class SecurityService implements OnInit {
 
     this.storage.store('userAuthorizationCode', '');
     this.storage.store('userAuthorizationToken', '');
+    this.storage.store('userAuthorizationTokenExpiration', 0);
     this.storage.store('userAuthorizationIdToken', '');
 
     this.applicationState.changeAuthenticatedInformation(false);
@@ -45,7 +46,7 @@ export class SecurityService implements OnInit {
   }
 
   //Armazena as informações de autenticação do usuário
-  public setUserAuthorizationData(code: any, token: any, idToken: any) {
+  public setUserAuthorizationData(code: any, token: any, idToken: any, expiresIn: number) {
 
     if (this.storage.retrieve('userAuthorizationToken') !== '') {
       this.storage.store('userAuthorizationToken', '');
@@ -56,6 +57,7 @@ export class SecurityService implements OnInit {
 
     if (token) {
       this.storage.store('userAuthorizationToken', token);
+      this.storage.store('userAuthorizationTokenExpiration', Date.now() + (expiresIn * 1000));
 
       this.pessoaDataService.ObterPerfil().subscribe(perfil => {
         this.applicationState.changeAuthenticatedInformation(true);
@@ -103,7 +105,8 @@ export class SecurityService implements OnInit {
 
   public goToAuthentication() {
     this.resetUserAuthorizationData();
-    this.router.navigateByUrl('/login');
+    // this.router.navigateByUrl('/login');
+    this.authenticate('', '');
   }
 
   public authenticate(username: string, password: string): Observable<IConnectTokenResponse> {
@@ -115,7 +118,7 @@ export class SecurityService implements OnInit {
     const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
 
     let params = new HttpParams()
-      .set('grant_type', 'password')
+      .set('grant_type', 'client_token')
       .set('client_id', clientId)
       .set('scope', scope)
       .set('username', username)
@@ -132,7 +135,7 @@ export class SecurityService implements OnInit {
       .pipe(
         map((res: IConnectTokenResponse) => {
           const token = res.access_token;
-          this.setUserAuthorizationData(null, token, null);
+          this.setUserAuthorizationData(null, token, null, res.expires_in);
           return res;
         }),
         catchError((err: any) => {
@@ -161,6 +164,7 @@ export class SecurityService implements OnInit {
     let code = '';
     let token = '';
     let idToken = '';
+    let expiresIn = 0;
     let authResponseIsValid = false;
 
     if (!result.error) {
@@ -171,6 +175,7 @@ export class SecurityService implements OnInit {
         code = result.code;
         token = result.access_token;
         idToken = result.id_token;
+        expiresIn = result.expires_in;
 
         const dataIdToken: any = TokenHelper.getDataFromToken(idToken);
 
@@ -202,7 +207,7 @@ export class SecurityService implements OnInit {
     }
 
     if (authResponseIsValid) {
-      this.setUserAuthorizationData(code, token, idToken);
+      this.setUserAuthorizationData(code, token, idToken, expiresIn);
     }
     else {
       this.logoff();
@@ -219,17 +224,21 @@ export class SecurityService implements OnInit {
     //domainUrl = domainUrl.endsWith('/') ? domainUrl : `${domainUrl}/`;
     
     let params = new HttpParams({ encoder: new CustomHttpParamEncoder() });
-    params = params.set('id_token_hint', this.storage.retrieve('userAuthorizationIdToken'));
+    params = params.set('id_token_hint', this.storage.retrieve('userAuthorizationToken'));
     //params = params.set('post_logout_redirect_uri', domainUrl);
 
     //Remove os dados de autenticação
     this.resetUserAuthorizationData();
     
     //Redireciona o usuário para a URL de logoff
-    this.dataService.get(this.configurationService.getIdentityUrl() + 'connect/endsession?' + params.toString(), true).subscribe(res => { });
+    this.dataService.get(this.configurationService.getIdentityUrl() + 'connect/endsession?' + params.toString(), true).subscribe(res => { 
+      window.location.href = 'https://gov.br';
+    }, () => {
+      window.location.href = 'https://gov.br';
+    });
 
     //Recarrega a página para atualizar as informações de login
-    window.location.reload();
+    // window.location.reload();
   }
 
 }

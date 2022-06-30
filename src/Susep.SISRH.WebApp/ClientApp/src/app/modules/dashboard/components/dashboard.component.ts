@@ -31,14 +31,16 @@ export class DashboardComponent implements OnInit {
     );
 
     this.applicationState.perfilUsuario.subscribe(perfil => {
-      this.usuarioLogadoId = perfil.pessoaId;
+      if (perfil) {
+        this.usuarioLogadoId = perfil.pessoaId;
 
-      this.chefe = perfil.perfis.filter(p =>
-        p.perfil === PerfilEnum.Gestor ||
-        p.perfil === PerfilEnum.Administrador ||
-        p.perfil === PerfilEnum.Diretor ||
-        p.perfil === PerfilEnum.CoordenadorGeral ||
-        p.perfil === PerfilEnum.ChefeUnidade).length > 0;
+        this.chefe = perfil.perfis.filter(p =>
+          p.perfil === PerfilEnum.Gestor ||
+          p.perfil === PerfilEnum.Administrador ||
+          p.perfil === PerfilEnum.Diretor ||
+          p.perfil === PerfilEnum.CoordenadorGeral ||
+          p.perfil === PerfilEnum.ChefeUnidade).length > 0;
+      }
     });
 
     

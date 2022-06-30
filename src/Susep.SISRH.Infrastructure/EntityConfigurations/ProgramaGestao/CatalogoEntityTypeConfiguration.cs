@@ -25,6 +25,8 @@ namespace Susep.SISRH.Infrastructure.EntityConfigurations.ProgramaGestao
                    .WithMany(p => p.Catalogos)
                    .HasForeignKey(p => p.UnidadeId)
                    .HasConstraintName("FK_Catalogo_Unidade");
+                
+            builder.Property(p => p.UnidadeId).HasColumnName("unidadeId");
 
         }
 

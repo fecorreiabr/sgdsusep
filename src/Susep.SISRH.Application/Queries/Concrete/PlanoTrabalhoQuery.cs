@@ -1,7 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Extensions.Configuration;
 using Susep.SISRH.Application.Queries.Abstractions;
-using Susep.SISRH.Application.Queries.RawSql;
+using Susep.SISRH.Application.Queries.RawPSql;
 using Susep.SISRH.Application.Requests;
 using Susep.SISRH.Application.ViewModels;
 using Susep.SISRH.Domain.Enums;
@@ -10,7 +10,7 @@ using SUSEP.Framework.Result.Concrete;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using SqlConnection = Npgsql.NpgsqlConnection;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -243,7 +243,7 @@ namespace Susep.SISRH.Application.Queries.Concrete
             }
 
             if (unidades.Any())
-                query = query.Replace("#UNIDADES#", " AND p.unidadeId in (" + String.Join(',', unidades) + " )");
+                query = query.Replace("#UNIDADES#", " AND p.\"unidadeId\" in (" + String.Join(',', unidades) + " )");
             else
                 query = query.Replace("#UNIDADES#", string.Empty);
 

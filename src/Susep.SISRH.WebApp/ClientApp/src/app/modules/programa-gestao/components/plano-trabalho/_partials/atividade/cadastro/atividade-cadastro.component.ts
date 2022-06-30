@@ -46,6 +46,9 @@ export class PlanoAtividadeCadastroComponent implements OnInit {
 
   public tempoMask: any;
 
+  // Incluído por 30989804860
+  selecaoTodas = false;
+
   constructor(
     private formBuilder: FormBuilder,
     private modalService: NgbModal,

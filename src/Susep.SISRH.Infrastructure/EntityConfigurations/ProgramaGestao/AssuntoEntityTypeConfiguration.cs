@@ -11,6 +11,7 @@ namespace Susep.SISRH.Infrastructure.EntityConfigurations.ProgramaGestao
             builder.ToTable("Assunto", "ProgramaGestao");
 
             builder.HasKey(p => p.AssuntoId);
+            builder.Property(p => p.AssuntoId).HasColumnName("assuntoId");
 
             builder.Ignore(p => p.Id)
                    .Ignore(p => p.RequestedHashCode);
@@ -26,6 +27,7 @@ namespace Susep.SISRH.Infrastructure.EntityConfigurations.ProgramaGestao
                    .WithMany()
                    .HasForeignKey(p => p.AssuntoPaiId)
                    .HasConstraintName("FK_Assunto_AssuntoPai");
+            builder.Property(p => p.AssuntoPaiId).HasColumnName("assuntoPaiId");
 
         }
 

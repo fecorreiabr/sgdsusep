@@ -53,7 +53,7 @@
                     FROM [ProgramaGestao].[PlanoTrabalhoAtividadeItem] pa
                         INNER JOIN [ProgramaGestao].[PlanoTrabalhoAtividade] p ON pa.planoTrabalhoAtividadeId = p.planoTrabalhoAtividadeId
 	                    INNER JOIN [ProgramaGestao].[ItemCatalogo] i ON pa.itemCatalogoId = i.itemCatalogoId 
-                    WHERE p.planoTrabalhoId = @planoTrabalhoId
+                    WHERE p.planoTrabalhoId = @planoTrabalhoId;
                             
                     SELECT  pa.planoTrabalhoAtividadeId
                             ,pa.planoTrabalhoAtividadeCriterioId
@@ -62,7 +62,7 @@
                     FROM [ProgramaGestao].[PlanoTrabalhoAtividadeCriterio] pa
                         INNER JOIN [ProgramaGestao].[PlanoTrabalhoAtividade] p ON pa.planoTrabalhoAtividadeId = p.planoTrabalhoAtividadeId
 	                    INNER JOIN [dbo].[CatalogoDominio] i ON pa.criterioId = i.catalogoDominioId 
-                    WHERE p.planoTrabalhoId = @planoTrabalhoId
+                    WHERE p.planoTrabalhoId = @planoTrabalhoId;
 
                     SELECT pa.planoTrabalhoAtividadeAssuntoId
                           ,pa.planoTrabalhoAtividadeId

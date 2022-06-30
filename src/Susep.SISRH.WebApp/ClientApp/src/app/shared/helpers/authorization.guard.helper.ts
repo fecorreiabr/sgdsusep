@@ -30,7 +30,8 @@ export class AuthGuard implements CanActivate {
 
     // Tenta obter o token do usuário
     // Se o token existir, significa que o usuário está autenticado
-    if (this.isAuthenticated) {
+    // Incluida expiracao do token por Felipe dos Reis Correia (aqui da uma margem de 5 minutos antes)
+    if (this.isAuthenticated && Date.now() < this.storage.retrieve('userAuthorizationTokenExpiration') - 60*5*1000) {
 
       //Se for gestor ou administrador do sistema, autoriza tudo
       if (this.perfilUsuario.perfis.filter(p => p.perfil === PerfilEnum.Gestor || p.perfil === PerfilEnum.Administrador).length > 0)

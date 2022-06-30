@@ -44,8 +44,11 @@ namespace Susep.SISRH.Application.Configurations
                 {
                     ClientId = "SISGP.Web",
                     ClientName = "Cliente web do SISGP",
-                    AllowedGrantTypes = GrantTypes.ResourceOwnerPasswordAndClientCredentials,
-
+                    AllowedGrantTypes = {
+                        GrantType.ClientCredentials,
+                        GrantType.ResourceOwnerPassword,
+                        "client_token"
+                    },
                     ClientSecrets =
                     {
                         new Secret("secret".Sha256())
@@ -55,7 +58,8 @@ namespace Susep.SISRH.Application.Configurations
                         IdentityServerConstants.StandardScopes.Profile,
                         "SISGP.ProgramaGestao"
                     },
-                    AllowOfflineAccess = true
+                    AllowOfflineAccess = true,
+                    AccessTokenLifetime = 60*20
                 }
             };
         }

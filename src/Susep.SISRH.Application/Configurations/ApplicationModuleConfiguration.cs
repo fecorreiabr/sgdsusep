@@ -36,8 +36,11 @@ namespace Susep.SISRH.Application.Configurations
             //Registra o DbContextOptionsBuilder
             builder.Register(ctx =>
             {
+                // DbContextOptionsBuilder<SISRHDbContext> options = new DbContextOptionsBuilder<SISRHDbContext>();
+                // options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+
                 DbContextOptionsBuilder<SISRHDbContext> options = new DbContextOptionsBuilder<SISRHDbContext>();
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
 
                 return new SISRHDbContext(options.Options);
             })

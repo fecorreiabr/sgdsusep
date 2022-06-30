@@ -1,6 +1,6 @@
 # SUSEP - Docker
 
-**Versão atual:** 1.7 (com correções no código fonte)
+**Versão atual:** 1.7a (com correções no código fonte, alteração da base para Postgres e login com certificado digital A3)
 
 É possível subir a aplicação por meio do [Docker](https://www.docker.com/). Dentre as vantagens estão:
 1. A ausência da necessidade de uma configuração do IIS;
@@ -22,42 +22,57 @@
 
 Em uma máquina que tenha o [Docker](https://docs.docker.com/engine/install/) e o [docker-compose](https://docs.docker.com/compose/install/) instalados, baixe o código. Esse passo pode ser via git
 ```bash
-git clone https://github.com/spbgovbr/Sistema_Programa_de_Gestao_Susep.git
-git checkout docker-codigo-fonte
+git clone CAMINHO_DO_GIT_AQUI
 ```
-ou baixando diretamente o código pelo link:
-* <https://github.com/spbgovbr/Sistema_Programa_de_Gestao_Susep/archive/docker-codigo-fonte.zip>
+ou baixando diretamente o código pelo link do Github.
 
 Após baixar, acesse a pasta do projeto pelo terminal
 ```bash
-cd Sistema_Programa_de_Gestao_Susep
+cd sgdsusep
 ```
 
-Por fim, execute o seguinte comando para subir a aplicação
+Execute o comando para build da imagem
 ```bash
-docker-compose -f docker/docker-compose.yml up -d
-```
-E o seguinte comando para subir o banco de dados de homologação
-```bash
-# Obs: Execute DEPOIS do docker/docker-compose.yml
-docker-compose -f docker/docker-compose.sqlserver-homologacao.yml up -d
+docker build -f ./docker/Dockerfile -t local/sgd_susep:latest -t local/sgd_susep:1.7a .
 ```
 
-Pronto, a aplicação está acessível no endereço http://localhost. Porém você não irá conseguir se logar se não configurar o LDAP (veja abaixo) se não inserir as pessoas na tabela de pessoas.
+Crie a rede 'pgd' no docker:
+```bash
+docker network create pgd
+```
+
+Altere as informações sobre os certificados SSL do site:
+* docker/docker-compose.yml: `traefik -> volumes`, apontar para os arquivos de chaves pública, privada e CA do Serpro
+* docker/traefik.yml: `certificates`, alterar o nome dos arquivos das chaves pública e privada
+
+Altere a senha do banco de dados:
+* docker/docker-compose-postgres.yml: `services -> db -> environment -> POSTGRES_PASSWORD`
+* docker/docker-compose.yml: `web-api -> environment -> ConnectionStrings__DefaultConnection`
+
+Altere o texto do Termo de Aceite no arquivo `docker/api/Settings/appsettings.Homolog.json`, chave `PadroesOptions -> TermoAceite`.
+
+Por fim, execute o seguinte comando para subir o Postgres e a aplicação:
+```bash
+cd docker
+./deploy.sh
+```
+
+Pronto, a aplicação está acessível no endereço http://localhost. Porém você não irá conseguir se logar se não ~~configurar o LDAP (veja abaixo) se não~~ inserir as pessoas na tabela de pessoas.
 
 ### Configurações
 
 Após alterar uma configuração, execute
 ```bash
-docker-compose -f docker/docker-compose.yml down
-docker-compose -f docker/docker-compose.yml up -d
+docker-compose -f docker-compose-postgres.yml -p sgd_postgres down
+docker-compose -f docker-compose.yml -p sgd down
+./deploy.sh
 ```
 
 #### Verificando se deu certo
 
 Execute o seguinte comando
 ```bash
-docker-compose -f docker/docker-compose.yml ps -a
+docker-compose -f docker-compose.yml -p sgd -a
 ```
 Os 4 containers devem estar ativos.
 ```
@@ -69,20 +84,8 @@ docker_web-api_1       dotnet Susep.SISRH.WebApi.dll    Up
 docker_web-app_1       dotnet Susep.SISRH.WebApp.dll    Up
 ```
 
-Caso nenhum dos três relacionados ao dotnet subirem (`web-app`, `web-api`, `gateway`), provavelmente o usuário **dos containers** não tem permissão o suficiente para subir o processo e utilizar a porta 80. Esse erro foi detectado no CentOs, mas não ocorre no Debian e nem no Ubuntu. A forma que sabemos até o momento de "contornar" esse problema é dizer que o usuário root que irá rodar esse processo. Altere o docker-compose adicionando o seguinte:
-```diff
-web-api:
-    image: ghcr.io/srmourasilva/sistema_programa_de_gestao_susep/sgd:latest
-+    user: 0:0
-...
-api-gateway:
-    image: ghcr.io/srmourasilva/sistema_programa_de_gestao_susep/sgd:latest
-+    user: 0:0
-...
-web-app:
-    image: ghcr.io/srmourasilva/sistema_programa_de_gestao_susep/sgd:latest
-+    user: 0:0
-```
+Caso nenhum dos três relacionados ao dotnet subirem (`web-app`, `web-api`, `gateway`), provavelmente o usuário **dos containers** não tem permissão o suficiente para subir o processo e utilizar as portas 80 e 443. Neste caso, pode-se incluir a configuração `user: 0:0` em cada um dos serviços web-api, api-gateway e web-app no docker-compose.yml.
+
 Atente-se que o yml é sensível a identação e que foi utilizado espaço como identação.
 
 #### Configurar Servidor de email
@@ -98,7 +101,9 @@ Acesse o arquivo `docker/docker-compose.yml` e edite as seguintes linhas conform
 
 #### Configurar Servidor ldap
 
-Acesse o arquivo `docker/docker-compose.yml` e edite as seguintes linhas
+Nesta versão com autenticação via certificado digital A3 o LDAP não é utilizado.
+
+~~Acesse o arquivo `docker/docker-compose.yml` e edite as seguintes linhas~~
 ```yml
       # LDAP
       # -> URL do Servidor LDAP
@@ -119,44 +124,11 @@ Acesse o arquivo `docker/docker-compose.yml` e edite as seguintes linhas
       - ldapOptions__Configurations__0__EmailAttributeFilter=
 ```
 
-**Obs:** Note que é possível definir mais de uma configuração. Basta copiar as linhas e trocar `__n__` por `__n+1__` nas linhas novas (ex: `__0__` -> `__1__`).
+~~**Obs:** Note que é possível definir mais de uma configuração. Basta copiar as linhas e trocar `__n__` por `__n+1__` nas linhas novas (ex: `__0__` -> `__1__`).~~
 
 #### Observações
 
-* O login só ocorrerá adequadamente caso exista um usuário na tabela `[dbo].[Pessoa]` com o CPF e o email igual ao usuário do LDAP;
-* Caso seja consultado uma pessoa que não exista na base do LDAP, o `api-gateway` retornará um erro `500` e nada será exibido para o usuário pelo `web-app`. No response você poderá ver uma mensagem como `System.Threading.Tasks.TaskCanceledException: A task was canceled.`;
-* Por algum motivo desconhecido, em alguns casos é necessário pressionar o botão de `Entrar` duas vezes;
-* A aplicação possui [usuários de teste](https://github.com/spbgovbr/Sistema_Programa_de_Gestao_Susep#valida%C3%A7%C3%A3o-da-instala%C3%A7%C3%A3o-3%C2%AA-etapa) para simplificar o processo de homologação. Você pode ver [a lista completa dos usuários que não necessitam de senha](https://github.com/spbgovbr/Sistema_Programa_de_Gestao_Susep/blob/97892e1/src/Susep.SISRH.Application/Auth/ResourceOwnerPasswordValidator.cs#L45-L54). Caso utilize em produção, não execute o script `install/4. Inserir dados de teste - Opcional.sql`. Caso não sejam retirados, estes usuários poderão serem utilizados por pessoas má-intensionadas como [backdook](https://pt.wikipedia.org/wiki/Backdoor).
-
-#### Configurar Acesso ao Banco de Dados
-
-Caso você queira utilizar um servidor de banco de dados SQL Server com a devida licença, será necessário alterar a configuração do banco.
-Acesse o arquivo ``docker/docker-compose.yml` e edite as seguintes linhas:
-```yaml
-      # Configurações de banco de dados
-      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=master;User Id=sa;Password=P1ssw@rd;
-```
-
-#### Configurar Script de inserção de dados no Banco de Dados
-
-**Obs:** Este passo só é necessário caso você utilize o banco de dados configurado no `docker-compose.sqlserver-homologacao.yml`. Caso você decida utilizar outro banco de dados (por exemplo, um banco SQL Server com licença), naturalmente você deverá executar todos os scripts do banco definidos como obrigatório.
-
-Edite o arquivo `install/4. Inserir dados de teste - Opcional.sql`, conforme desejado.
-
-Caso não seja detectada a existência do banco `programa_gestao`, ele será criado e os scripts `.sql` serão executados, conforme definido em `docker-compose.sqlserver-homologacao.yml`. Os registros do banco são persistidos na pasta `docker/volume` por meio de volume docker ([bind mount](https://docs.docker.com/storage/bind-mounts/)). Caso seja detectado a existência do banco `programa_gestao`, nenhum script será executado, mesmo que você adicione um novo script sql na lista de volumes.
-
-Se por ventura você editar os arquivos `sql`, eles somente serão automaticamente executados caso você exclua a pasta `docker/volume/mssql/`. Entretanto, isto acarretará na perda de todos os dados. Caso você venha de uma versão anterior (a partir da 1.7), e queira manter os dados que existiam anteriormente, execute os eventuais novos scripts em sql manualmente.
-
-## Trabalhos futuros
-
-* [ ] Configurar um servidor LDAP de testes para possibilitar uma homologação do sistema sem precisar configurar manualmente esse passo (criar um docker-compose específico);
-* [ ] Gerar imagens nativas para Windows por Github Actions;
-* [ ] Gerar um build do código para indicar quando um código enviado para o gitlab estiver incompleto.
-
-## Outras informações
-
-Caso você deseje fazer o build local ao invés de utilizar a imagem preparada:
-```bash
-docker build -f docker/Dockerfile -t susep .
-```
-Lembre-se de alterar o `docker-compose.yml` para utilizar `susep` no lugar da imagem oficial.
+* O login só ocorrerá adequadamente caso exista um usuário na tabela `[dbo].[Pessoa]` com o CPF igual ao usuário do certificado digital A3;
+* ~~Caso seja consultado uma pessoa que não exista na base do LDAP, o `api-gateway` retornará um erro `500` e nada será exibido para o usuário pelo `web-app`. No response você poderá ver uma mensagem como `System.Threading.Tasks.TaskCanceledException: A task was canceled.`;~~
+* ~~Por algum motivo desconhecido, em alguns casos é necessário pressionar o botão de `Entrar` duas vezes;~~
+* ~~A aplicação possui [usuários de teste](https://github.com/spbgovbr/Sistema_Programa_de_Gestao_Susep#valida%C3%A7%C3%A3o-da-instala%C3%A7%C3%A3o-3%C2%AA-etapa) para simplificar o processo de homologação. Você pode ver [a lista completa dos usuários que não necessitam de senha](https://github.com/spbgovbr/Sistema_Programa_de_Gestao_Susep/blob/97892e1/src/Susep.SISRH.Application/Auth/ResourceOwnerPasswordValidator.cs#L45-L54). Caso utilize em produção, não execute o script `install/4. Inserir dados de teste - Opcional.sql`. Caso não sejam retirados, estes usuários poderão serem utilizados por pessoas má-intensionadas como [backdook](https://pt.wikipedia.org/wiki/Backdoor).~~ Usuários de teste removidos na versão Postgres.

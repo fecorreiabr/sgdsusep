@@ -20,6 +20,7 @@ namespace Susep.SISRH.Infrastructure.EntityConfigurations.ProgramaGestao
                 .ValueGeneratedOnAdd();
             
             builder.Property(p => p.PlanoTrabalhoId).HasColumnName("planoTrabalhoId");
+            builder.Property(p => p.PlanoTrabalhoObjetoId).HasColumnName("planoTrabalhoObjetoId");
             builder.Property(p => p.Data).HasColumnName("data");
             builder.Property(p => p.Titulo).HasColumnName("titulo");
             builder.Property(p => p.Descricao).HasColumnName("descricao");

@@ -17,17 +17,17 @@ using System.IO;
 namespace Susep.SISRH.WebApi
 {
     /// <summary>
-    /// Classe que faz a configuração inicial da aplicação
+    /// Classe que faz a configuraï¿½ï¿½o inicial da aplicaï¿½ï¿½o
     /// </summary>
     public class Startup
     {
         /// <summary>
-        /// Parametros de configuraçao do sistema
+        /// Parametros de configuraï¿½ao do sistema
         /// </summary>
         public IConfiguration Configuration { get; }
 
         /// <summary>
-        /// Construtor das configuraçoes do sistema
+        /// Construtor das configuraï¿½oes do sistema
         /// </summary>
         public IConfigurationBuilder Builder { get; }
 
@@ -41,7 +41,7 @@ namespace Susep.SISRH.WebApi
         }
 
         /// <summary>
-        /// Configura os serviços do sistema
+        /// Configura os serviï¿½os do sistema
         /// </summary>
         /// <param name="services"></param>
         /// <returns></returns>
@@ -67,6 +67,15 @@ namespace Susep.SISRH.WebApi
 
             services.ConfigureOptions(Configuration);
 
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy",
+                    builder => builder
+                        .AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
+            });
+
             // configure identity server with in-memory stores, keys, clients and scopes
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential() //AddSigningCredential()
@@ -74,10 +83,11 @@ namespace Susep.SISRH.WebApi
                 .AddInMemoryIdentityResources(IdentityServerConfiguration.GetIdentityResources())
                 .AddInMemoryApiScopes(IdentityServerConfiguration.GetApiScopes())
                 .AddInMemoryApiResources(IdentityServerConfiguration.GetApiResources())
-                .AddResourceOwnerValidator<Application.Auth.ResourceOwnerPasswordValidator>();
+                .AddExtensionGrantValidator<Application.Auth.ClientTokenValidator>();
+                // .AddResourceOwnerValidator<Application.Auth.ResourceOwnerPasswordValidator>();
                 //.AddLdapUsers<OpenLdapAppUser>(Configuration.GetSection("ldapActiveDirectory"), UserStore.InMemory);
 
-            // Configurando o serviço de documentação do Swagger
+            // Configurando o serviï¿½o de documentaï¿½ï¿½o do Swagger
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1",
@@ -85,7 +95,7 @@ namespace Susep.SISRH.WebApi
                     {
                         Title = "Sistema de recursos humanos",
                         Version = "v1",
-                        Description = "API REST para manutenção de dados de colaboradores da Susep",
+                        Description = "API REST para manutenï¿½ï¿½o de dados de colaboradores da Susep",
                     });
 
                 string caminhoAplicacao =
@@ -125,9 +135,9 @@ namespace Susep.SISRH.WebApi
                 app.UseHsts();
             }
 
-            app.UseCors(option => option.AllowAnyOrigin()
-                                 .AllowAnyMethod()
-                                 .AllowAnyHeader());
+            app.UseCors("CorsPolicy");
+            // app.UseHttpsRedirection();
+            // app.UseAuthentication();
 
             app.UseRouting();
             app.UseIdentityServer();

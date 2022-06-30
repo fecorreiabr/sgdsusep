@@ -20,13 +20,12 @@ namespace Susep.SISRH.Infrastructure.EntityConfigurations
 
             builder.Property(p => p.PessoaId).HasColumnName("pessoaId");
             builder.Property(p => p.Nome).HasColumnName("pesNome");
-            builder.Property(p => p.CargaHorariaDb).HasColumnName("cargaHoraria");
+            builder.Property(p => p.CargaHorariaDb).HasColumnName("CargaHoraria");
             builder.Property(p => p.TipoFuncaoId).HasColumnName("tipoFuncaoId");
             builder.Property(p => p.Cpf).HasColumnName("pesCPF");
             builder.Property(p => p.Email).HasColumnName("pesEmail");
             builder.Property(p => p.MatriculaSiape).HasColumnName("pesMatriculaSiape");
-
-
+            builder.Property(p => p.UnidadeId).HasColumnName("unidadeId");
 
 
 

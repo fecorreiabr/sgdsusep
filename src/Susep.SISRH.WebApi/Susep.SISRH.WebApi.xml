@@ -982,17 +982,17 @@
         </member>
         <member name="T:Susep.SISRH.WebApi.Startup">
             <summary>
-            Classe que faz a configuração inicial da aplicação
+            Classe que faz a configura��o inicial da aplica��o
             </summary>
         </member>
         <member name="P:Susep.SISRH.WebApi.Startup.Configuration">
             <summary>
-            Parametros de configuraçao do sistema
+            Parametros de configura�ao do sistema
             </summary>
         </member>
         <member name="P:Susep.SISRH.WebApi.Startup.Builder">
             <summary>
-            Construtor das configuraçoes do sistema
+            Construtor das configura�oes do sistema
             </summary>
         </member>
         <member name="M:Susep.SISRH.WebApi.Startup.#ctor(Microsoft.AspNetCore.Hosting.IWebHostEnvironment,Microsoft.Extensions.Configuration.IConfiguration)">
@@ -1003,7 +1003,7 @@
         </member>
         <member name="M:Susep.SISRH.WebApi.Startup.ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             <summary>
-            Configura os serviços do sistema
+            Configura os servi�os do sistema
             </summary>
             <param name="services"></param>
             <returns></returns>

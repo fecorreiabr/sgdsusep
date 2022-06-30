@@ -6,7 +6,7 @@ using SUSEP.Framework.Result.Concrete;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using SqlConnection = Npgsql.NpgsqlConnection;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -15,7 +15,7 @@ using System.Data.SqlTypes;
 using System.Transactions;
 using Susep.SISRH.Application.Queries.Abstractions;
 using Susep.SISRH.Application.ViewModels;
-using Susep.SISRH.Application.Queries.RawSql;
+using Susep.SISRH.Application.Queries.RawPSql;
 using Susep.SISRH.Application.Requests;
 using Susep.SISRH.Domain.Enums;
 
